@@ -3,7 +3,7 @@
 **Author:** Preston Vance
 **Version:** 0.1 (Draft)
 **Last Updated:** 2026-03-16
-**Status:** Draft — Pending Rich's answers and sample MieTrak/Flexiss CSVs
+**Status:** Draft — Pending Rich's answers and sample MieTrak CSVs
 
 ---
 
@@ -15,7 +15,7 @@ Mountain Racing Products (MRP) is a small bicycle parts manufacturer operating t
 2. **Sea vs. air freight decisions** — determining when air freight is necessary to protect US customer orders
 3. **Customer forecast integration** — ingesting CSV demand forecasts from OEM customers (e.g., Giant) that MieTrak cannot consume natively
 
-To compensate, their supply chain manager (Rich) maintains a complex multi-tab Excel workbook ("Inventory B") that has reached Version 9 and is showing fragility at its current scale. The workbook is updated manually 1–3 times per week via copy/paste from MieTrak and Flexiss CSV exports, with additional manual column insertions for each sea/air release event.
+To compensate, their supply chain manager (Rich) maintains a complex multi-tab Excel workbook ("Inventory B") that has reached Version 9 and is showing fragility at its current scale. The workbook is updated manually 1–3 times per week via copy/paste from MieTrak CSV exports, with additional manual column insertions for each sea/air release event.
 
 This project replaces the brittle spreadsheet workflow with an automated Microsoft Fabric data platform and adds an AI layer for exception detection, plain-English alerts, and sea vs. air shipping recommendations.
 
@@ -24,7 +24,7 @@ This project replaces the brittle spreadsheet workflow with an automated Microso
 ## 2. Goals
 
 ### Primary Goals (MVP — must ship)
-- [ ] Automate ingestion of MieTrak and Flexiss CSV exports into a Fabric Lakehouse
+- [ ] Automate ingestion of MieTrak CSV exports into a Fabric Lakehouse
 - [ ] Replicate the core Inventory B ordering algorithm in SQL/notebook logic
 - [ ] Detect and surface parts projected to go negative before the next sea shipment
 - [ ] Generate a PO Needs list (parts where projected balance goes negative) automatically
@@ -50,7 +50,7 @@ This project replaces the brittle spreadsheet workflow with an automated Microso
 |---|---|---|
 | Rich (Supply Chain Manager) | Primary operator | Replace weekly spreadsheet update process; see PO Needs and sea/air recommendations automatically |
 | Tim Fry (Co-founder) | Executive | Quick answer to "what's at risk today?" without opening spreadsheets |
-| Christy Fry (Co-founder/IT) | Admin + data owner | Understand and approve the system; manage MieTrak/Flexiss exports |
+| Christy Fry (Co-founder/IT) | Admin + data owner | Understand and approve the system; manage MieTrak exports |
 | Cindy | Release approver | Receive release Excel file; currently a manual email step |
 | Preston (Developer) | Builder | Build, document, and hand off the system |
 
@@ -70,12 +70,11 @@ This project replaces the brittle spreadsheet workflow with an automated Microso
   - Work Orders / production status
 - **Division split:** MieTrak has two divisions (US + Taiwan); exports should be separated or tagged by division
 
-### 4.2 Flexiss WMS (US on-hand inventory)
-- **Access method:** CSV/Excel export — exact mechanism TBD (pending Rich confirmation)
+### 4.2 US On-Hand Inventory
+- **Access method:** CSV/Excel export from MieTrak or other specified system (pending Rich confirmation)
 - **Delivery:** Same shared mailbox or SharePoint folder
 - **Frequency:** At minimum with each Inventory B refresh (1–3x/week)
 - **Key data:** US warehouse on-hand quantities by part number
-- **Open question:** Why does US on-hand come from Flexiss rather than MieTrak? Are these systems tracking different warehouses?
 
 ### 4.3 Customer Forecast Files (OEM demand)
 - **Source:** Customers such as Giant provide periodic demand forecast CSVs
@@ -119,7 +118,7 @@ Months of Supply =
 
 | Layer | Contents |
 |---|---|
-| **Bronze** | Raw landed files — MieTrak CSV, Flexiss CSV, customer forecast CSV, manual exception inputs |
+| **Bronze** | Raw landed files — MieTrak CSV, customer forecast CSV, manual exception inputs |
 | **Silver** | Cleaned, standardized, deduplicated tables with consistent part keys and normalized dates |
 | **Gold** | Business-ready fact and dimension tables; derived views for planning and exception logic |
 
@@ -188,7 +187,7 @@ fact_inventory_snapshot
   on_hand_qty
   committed_qty
   available_qty
-  source_system    -- MieTrak or Flexiss
+  source_system    -- MieTrak
 
 fact_sales_order_line
   order_line_id
@@ -285,7 +284,7 @@ vw_shipping_recommendation  (replaces Release tab logic)
 
 A Fabric Data Factory pipeline that:
 - Monitors a SharePoint folder or shared mailbox attachment drop
-- Detects new CSV files by source type (MieTrak orders, MieTrak inventory, Flexiss, customer forecast)
+- Detects new CSV files by source type (MieTrak orders, MieTrak inventory, customer forecast)
 - Validates schema and logs any column mismatches
 - Lands raw files in the Bronze Lakehouse layer with a timestamp and source tag
 - Triggers downstream Silver/Gold transformation notebooks on successful load
@@ -405,7 +404,6 @@ A derived view and dashboard widget that:
 ```
 Data Sources
   MieTrak (CSV export, manual trigger)
-  Flexiss (CSV export, manual trigger)
   Customer Forecast (CSV, weekly drop)
   Manual inputs (demand factor, EOM counts)
         |
@@ -453,7 +451,7 @@ Presentation & Action Layer
 
 | # | Question | Who to Ask | Blocks |
 |---|---|---|---|
-| OQ-01 | What is Flexiss — separate WMS or something else? Can it export CSV automatically or does it require manual trigger? | Rich / Christy | F-01 pipeline design |
+| OQ-01 | How is US on-hand inventory accurately extracted if not through Flexiss? | Rich / Christy | F-01 pipeline design |
 | OQ-02 | What columns does the MieTrak inventory report include? What does the open orders report look like? | Christy (screen share) | Silver layer schema |
 | OQ-03 | How is the DEMAND FACTOR set per part? When is it adjusted away from 1.00? | Rich | F-02 algorithm accuracy |
 | OQ-04 | Does "DO NOT REORDER" exist as a field in MieTrak, or is it only in spreadsheet notes? | Rich | dim_part.active_status |
@@ -478,7 +476,7 @@ Presentation & Action Layer
 
 | Sprint | Weeks | Deliverables |
 |---|---|---|
-| Sprint 0 | Week 1 | Rich interview → answers to OQ-01 through OQ-08. Obtain sample MieTrak + Flexiss CSVs. Finalize data contract (column mapping). Set up Fabric workspace + GitHub repo + Antigravity. |
+| Sprint 0 | Week 1 | Rich interview → answers to OQ-01 through OQ-08. Obtain sample MieTrak CSVs. Finalize data contract (column mapping). Set up Fabric workspace + GitHub repo + Antigravity. |
 | Sprint 1 | Week 2 | Bronze layer ingestion pipeline. Schema validation. First Silver layer tables: dim_part, fact_inventory_snapshot, fact_sales_order_line. |
 | Sprint 2 | Week 3 | Gold layer: remaining fact tables. Implement ordering algorithm in SQL/notebook. Validate against spreadsheet output for 10 test parts. |
 | Sprint 3 | Week 4 | Power BI dashboard (F-04). PO Needs report (F-03). At least one alert type (F-05). |
