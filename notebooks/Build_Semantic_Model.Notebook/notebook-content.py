@@ -1,3 +1,22 @@
+# Fabric notebook source
+
+# METADATA ********************
+
+# META {
+# META   "kernel_info": {
+# META     "name": "synapse_pyspark"
+# META   },
+# META   "dependencies": {
+# META     "lakehouse": {
+# META       "default_lakehouse": "21708f39-20b9-4dda-9ab9-bd346e45ca0c",
+# META       "default_lakehouse_name": "MRPLakehouse",
+# META       "default_lakehouse_workspace_id": "19f5ade2-5ab6-4e67-9c26-157935db64e3"
+# META     }
+# META   }
+# META }
+
+# CELL ********************
+
 # Build Power BI Semantic Model Relationships
 # This script uses Semantic Link (sempy) to programmatically establish the 
 # relationships on the default MRPLakehouse semantic model.
@@ -35,3 +54,11 @@ for from_table, from_col, to_table, to_col in relationships:
         print(f"⚠️ Could not create relationship {from_table} -> {to_table}: {e}")
 
 print("\nSemantic Model configuration finished! You can now build the Power BI Dashboard on this dataset.")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }

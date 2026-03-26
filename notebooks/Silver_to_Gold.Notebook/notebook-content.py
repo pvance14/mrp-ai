@@ -1,3 +1,22 @@
+# Fabric notebook source
+
+# METADATA ********************
+
+# META {
+# META   "kernel_info": {
+# META     "name": "synapse_pyspark"
+# META   },
+# META   "dependencies": {
+# META     "lakehouse": {
+# META       "default_lakehouse": "21708f39-20b9-4dda-9ab9-bd346e45ca0c",
+# META       "default_lakehouse_name": "MRPLakehouse",
+# META       "default_lakehouse_workspace_id": "19f5ade2-5ab6-4e67-9c26-157935db64e3"
+# META     }
+# META   }
+# META }
+
+# CELL ********************
+
 # Silver to Gold Data Transformation Notebook
 # This script reads from the clean Silver tables, applies the core Ordering Algorithm,
 # and outputs the final time-phased Supply vs. Demand tables (Gold).
@@ -110,3 +129,11 @@ vw_shipping = vw_shipping.withColumn(
 vw_shipping.write.format("delta").mode("overwrite").saveAsTable("vw_shipping_recommendation")
 
 print("Silver-to-Gold transformation complete. Ordering algorithm results written to 'vw_part_criticality' and 'vw_shipping_recommendation' Delta tables.")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
