@@ -79,4 +79,34 @@ vw_projected = vw_projected.withColumn(
 # Output vw_part_criticality to Gold
 vw_projected.write.format("delta").mode("overwrite").saveAsTable("vw_part_criticality")
 
-print("Silver-to-Gold transformation complete. Ordering algorithm results written to 'vw_part_criticality' Delta table.")
+# ==========================================
+# 4. Sea vs. Air Recommendation Engine (F-07)
+# ==========================================
+# Calculate Weeks On Hand (WOH) to determine if air freight is needed
+# before a pending sea shipment arrives.
+
+vw_shipping = vw_projected.filter(col("total_inbound") > 0).select(
+    "part_id", "total_on_hand", "total_inbound", "monthly_avg_usage"
+)
+
+vw_shipping = vw_shipping.withColumn(
+    "weekly_avg_usage", 
+    when(col("monthly_avg_usage") > 0, col("monthly_avg_usage") / 4).otherwise(lit(0))
+)
+
+vw_shipping = vw_shipping.withColumn(
+    "woh_before_sea",
+    when(col("weekly_avg_usage") > 0, col("total_on_hand") / col("weekly_avg_usage")).otherwise(lit(999))
+)
+
+# Recommend expedite if WOH is critically low before arrival
+vw_shipping = vw_shipping.withColumn(
+    "shipping_recommendation",
+    when(col("woh_before_sea") < 2, lit("EXPEDITE_AIR"))
+    .when(col("woh_before_sea") < 4, lit("MANAGEMENT_REVIEW"))
+    .otherwise(lit("RELEASE_TO_SEA"))
+)
+
+vw_shipping.write.format("delta").mode("overwrite").saveAsTable("vw_shipping_recommendation")
+
+print("Silver-to-Gold transformation complete. Ordering algorithm results written to 'vw_part_criticality' and 'vw_shipping_recommendation' Delta tables.")

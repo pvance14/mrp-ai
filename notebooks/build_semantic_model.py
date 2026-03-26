@@ -12,6 +12,7 @@ print(f"Configuring relationships for Semantic Model: {dataset_name}...")
 # Define relationships: (Fact Table, Fact Column, Dim Table, Dim Column)
 relationships = [
     ("vw_part_criticality", "part_id", "dim_part", "part_id"),
+    ("vw_shipping_recommendation", "part_id", "dim_part", "part_id"),
     ("fact_inventory_snapshot", "part_id", "dim_part", "part_id"),
     ("fact_sales_order_line", "part_id", "dim_part", "part_id"),
     ("fact_purchase_order_line", "part_id", "dim_part", "part_id"),
